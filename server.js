@@ -1,4 +1,5 @@
-var express = require('express'),
+var dotenv = require('dotenv'),
+    express = require('express'),
     app = express(),
     bodyparser = require('body-parser'),
     connectdb = require('mongoose'),
@@ -8,7 +9,8 @@ var express = require('express'),
 require('./app/routes/routes')(app);
 app.use(bodyparser.json());
 
-connectdb.connect('mongodb://localhost:27017/test', { useNewUrlParser: true ,useCreateIndex: true, useUnifiedTopology: true });
+dotenv.config()
+connectdb.connect(process.env.MONGODB_URL, { useNewUrlParser: true ,useCreateIndex: true, useUnifiedTopology: true });
 const connection = connectdb.connection;
 connection.once ('open',() => {
     console.log("Mongodb database connection established succesfully");
@@ -16,7 +18,7 @@ connection.once ('open',() => {
 
 app.use('/swagger/api', swagger_ui.serve, swagger_ui.setup(swagger_doc));
 
-app.listen(3000, () => {
-    console.log("Server is running on port: " + 3000);
+app.listen(process.env.PORT, () => {
+    console.log("Server is running on port: " + process.env.PORT);
     connectdb;
 });
