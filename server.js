@@ -8,7 +8,7 @@ var dotenv = require('dotenv'),
 
 require('./app/routes/routes')(app);
 app.use(bodyparser.json());
-// database connection
+
 dotenv.config()
 connectdb.connect(process.env.MONGODB_URL, { useNewUrlParser: true ,useCreateIndex: true, useUnifiedTopology: true });
 const connection = connectdb.connection;
