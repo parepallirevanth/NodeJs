@@ -13,7 +13,7 @@ jobs:
   login-to-azure:
     executor: azure-cli/azure-docker
     steps:
-      - azure-cli/login-with-service-principal
+      - azure-cli/login-with-user 
       - run:
           command: az resource list
           name: List resources of tenant stored as `AZURE_SP_TENANT` env var
