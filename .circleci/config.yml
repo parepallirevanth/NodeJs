@@ -15,7 +15,7 @@ jobs:
     steps:
       - azure-cli/login-with-user 
       - run:
-          command: az resource list
+          command: az login --service-principal --username 524ae202-a6e7-4bf5-b553-670a2afdc9df --password 4abe0a89-438a-4767-901f-ee4ae8ca9724 --tenant 17360a6f-9efa-4fba-b22d-26ab50796678
           name: List resources of tenant stored as `AZURE_SP_TENANT` env var
   build:
     working_directory: ~/public
