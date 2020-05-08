@@ -1,6 +1,6 @@
 jobs:
   verify-install:
-    executor: azure-cli/default
+    executor: azure-cli/docker
     steps:
       - azure-cli/install
       - run:
@@ -12,7 +12,7 @@ jobs:
     steps:
       - azure-cli/login-with-service-principal
       - run:
-          command: az resource List
+          command: az resource list
           name: List resources of tenant stored as `AZURE_SP_TENANT` env var
   build:
     working_directory: ~/public
