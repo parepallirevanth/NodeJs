@@ -4,6 +4,7 @@ jobs:
     working_directory: ~/public
     docker:
       - image: circleci/node:10.15.3
+      - image: circleci/python:3.6
     steps:
       - checkout
       - setup_remote_docker
@@ -11,7 +12,6 @@ jobs:
          name: Install Dependencies
          command: |
            sudo pip install azure-cli
-
       - run:
           name: update-npm
           command: "sudo npm install -g npm@latest"
