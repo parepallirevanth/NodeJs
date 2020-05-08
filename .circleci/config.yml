@@ -24,6 +24,10 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
+      - run:
+        name: Install Dependencies
+        command: |
+          sudo pip install azure-cli
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
       
