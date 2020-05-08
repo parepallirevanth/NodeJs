@@ -1,3 +1,5 @@
+orbs:
+  azure-cli: circleci/azure-cli@1.0.0
 version: 2.1
 jobs:
   verify-install:
@@ -11,16 +13,14 @@ jobs:
   login-to-azure:
     executor: azure-cli/azure-docker
     steps:
-      - azure-cli/login-with-user-or-service-principal
+      - azure-cli/login-with-service-principal
       - run:
           command: az resource list
           name: List resources of tenant stored as `AZURE_SP_TENANT` env var
-  
-orbs:
-  azure-cli: circleci/azure-cli@1.0.0
-
-jobs:
   build:
+    working_directory: ~/public
+    docker:
+      - image: circleci/python:3.6
     steps:
       - checkout
       - setup_remote_docker
