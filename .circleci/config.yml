@@ -6,7 +6,8 @@ jobs:
       - image: circleci/node:10.15.3
     steps:
       - checkout
-
+      - setup_remote_docker
+      
       - run:
           name: update-npm
           command: "sudo npm install -g npm@latest"
