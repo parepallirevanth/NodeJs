@@ -3,7 +3,6 @@ jobs:
   build:
     working_directory: ~/public
     docker:
-      - image: circleci/node:10.15.3
       - image: circleci/python:3.6
     steps:
       - checkout
