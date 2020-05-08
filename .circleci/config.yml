@@ -18,7 +18,6 @@ jobs:
   
 orbs:
   azure-cli: circleci/azure-cli@1.0.0
-version: 2.1
 
 jobs:
   build:
