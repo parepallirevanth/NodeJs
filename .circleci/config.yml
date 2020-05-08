@@ -1,6 +1,3 @@
-orbs:
-  azure-cli: circleci/azure-cli@1.0.0
-version: 2.1
 jobs:
   verify-install:
     executor: azure-cli/default
@@ -15,7 +12,7 @@ jobs:
     steps:
       - azure-cli/login-with-user 
       - run:
-          command: az login --service-principal --username 524ae202-a6e7-4bf5-b553-670a2afdc9df --password 4abe0a89-438a-4767-901f-ee4ae8ca9724 --tenant 17360a6f-9efa-4fba-b22d-26ab50796678
+          command: az resource List
           name: List resources of tenant stored as `AZURE_SP_TENANT` env var
   build:
     working_directory: ~/public
@@ -44,6 +41,7 @@ jobs:
               TAG=$CIRCLE_SHA1
               docker login -u $DOCKER_LOGIN -p $DOCKER_PASSWORD
               docker push revanthparepalli/nodejs-app:$TAG
+              #az login --service-principal --username 524ae202-a6e7-4bf5-b553-670a2afdc9df --password 4abe0a89-438a-4767-901f-ee4ae8ca9724 --tenant 17360a6f-9efa-4fba-b22d-26ab50796678
               #az login --service-principal --username $AZURE_USERNAME	 --password $AZURE_PASSWORD --tenant $AZURE_TENANT
               az webapp config container set --name NodeJsWApp --resource-group appsvc_linux_centralus -c "revanthparepalli/nodejs-app:$TAG"
             fi
@@ -51,8 +49,6 @@ workflows:
   version: 2
   example-workflow:
     jobs:
-      - verify-install
-      - login-to-azure
-  secondflow:
-    jobs:
-      - build
+        - verify-install
+        - login-to-azure
+        - build
