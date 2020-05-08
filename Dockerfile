@@ -1,3 +1,13 @@
 FROM node:12.9
+WORKDIR /usr/src/app
+RUN npm install -g npm@latest 
 
-RUN npm install -g npm@latest && npm install
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 8080
+
+CMD ["node", "server.js"]
