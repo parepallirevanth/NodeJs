@@ -1,5 +1,6 @@
 FROM node:12.9
 WORKDIR /usr/src/app
+RUN npm install -g npm@latest 
 
 COPY package*.json ./
 
