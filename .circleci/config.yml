@@ -6,15 +6,30 @@ jobs:
       - image: circleci/node:10.15.3
     steps:
       - checkout
+
       - run:
           name: update-npm
           command: "sudo npm install -g npm@latest"
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
+      
       - run:
-          name: install-npm-wee
-          command: npm install
+          name: Build Docker image
+          command: |
+            TAG=$CIRCLE_SHA1
+            docker build -f Dockerfile -t revanthparepalli/nodejs-app:$TAG .
       - save_cache:
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
             - ./node_modules
+
+      - run:
+          name: Push Docker image and Update Azure Web App with the image
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              TAG=$CIRCLE_SHA1
+              docker login -u revanthparepalli -p Reva@1998
+              docker push revanthparepalli/nodejs-app:$TAG
+              az login --service-principal --username 524ae202-a6e7-4bf5-b553-670a2afdc9df --password 4abe0a89-438a-4767-901f-ee4ae8ca9724 --tenant 17360a6f-9efa-4fba-b22d-26ab50796678
+              az webapp config container set --name NodeJsWApp --resource-group appsvc_linux_centralus -c "revanthparepalli/nodejs-app:$TAG"
+            fi
