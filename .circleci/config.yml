@@ -48,8 +48,11 @@ jobs:
               az webapp config container set --name NodeJsWApp --resource-group appsvc_linux_centralus -c "revanthparepalli/nodejs-app:$TAG"
             fi
 workflows:
+  version: 2
   example-workflow:
     jobs:
       - verify-install
       - login-to-azure
+  secondflow:
+    jobs:
       - build
