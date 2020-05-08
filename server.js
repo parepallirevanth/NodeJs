@@ -10,6 +10,7 @@ require('./app/routes/routes')(app);
 app.use(bodyparser.json());
 
 dotenv.config()
+//database connectionx
 connectdb.connect(process.env.MONGODB_URL, { useNewUrlParser: true ,useCreateIndex: true, useUnifiedTopology: true });
 const connection = connectdb.connection;
 connection.once ('open',() => {
