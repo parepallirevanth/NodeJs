@@ -7,7 +7,7 @@ workflows:
       - azure-acr/build-and-push-image:
           login-server-name: revanthacr.azurecr.io
           registry-name: RevanthACR       
-          repo: nodejs-repository:$CIRCLE_TAG
+          repo: nodejs-webapp
           tag: $CIRCLE_TAG
           filters:
             branches:
