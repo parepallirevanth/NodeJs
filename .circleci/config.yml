@@ -1,13 +1,62 @@
 orbs:
-  azure-acr: circleci/azure-acr@0.2.0
+  azure-cli: circleci/azure-cli@1.0.0
 version: 2.1
+jobs:
+  verify-install:
+    executor: azure-cli/default
+    steps:
+      - azure-cli/install
+      - run:
+          command: az -v
+          name: Verify Azure CLI is installed
+
+  login-to-azure:
+    executor: azure-cli/azure-docker
+    steps:
+      - azure-cli/login-with-service-principal
+      - run:
+          command: az 
+          name: List resources of tenant stored as `AZURE_SP_TENANT` env var
+  build:
+    working_directory: ~/public
+    docker:
+      - image: circleci/python:3.6
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Install Dependencies
+          command: |
+            sudo pip install azure-cli
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      
+      - run:
+          name: Build Docker image
+          command: |
+            TAG=$CIRCLE_SHA1
+            docker build -f Dockerfile -t revanthparepalli/nodejs-app:$TAG .
+      - save_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+          paths:
+            - ./node_modules
+
+      - run:
+          name: Push Docker image and Update Azure Web App with the image
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              TAG=$CIRCLE_SHA1
+              az acr login --name RevanthACR
+              docker login revanthacr.azurecr.io -u RevanthACR -p 9aN7+FiFOp4DnelsDfWrPWrlUiM5cpqN
+              docker push revanthacr.azurecr.io/nodejs-app:$TAG
+              #az login --service-principal --username 524ae202-a6e7-4bf5-b553-670a2afdc9df --password 4abe0a89-438a-4767-901f-ee4ae8ca9724 --tenant 17360a6f-9efa-4fba-b22d-26ab50796678
+              #az login --service-principal --username $AZURE_USERNAME	 --password $AZURE_PASSWORD --tenant $AZURE_TENANT
+              az webapp config container set --name NodeJsWApp --resource-group appsvc_linux_centralus -c "revanthacr.azurecr.io/nodejs-app:$TAG"
+            fi
 workflows:
-  build-and-publish-docker-image:
+  version: 2
+  example-workflow:
     jobs:
-      - azure-acr/build-and-push-image:
-          dockerfile: Dockerfile
-          login-server-name: revanthacr.azurecr.io
-          registry-name: RevanthACR       
-          repo: nodejs-webapp
-          tag: $CIRCLE_TAG
-          
+        - verify-install
+        - login-to-azure
+        - build
