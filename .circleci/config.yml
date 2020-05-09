@@ -10,6 +10,4 @@ workflows:
           registry-name: RevanthACR       
           repo: nodejs-webapp
           tag: $CIRCLE_TAG
-          filters:
-            branches:
-              only: master
+          
