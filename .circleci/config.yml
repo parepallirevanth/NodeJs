@@ -35,7 +35,7 @@ jobs:
           name: Build Docker image
           command: |
             TAG=$CIRCLE_SHA1
-            docker build -f Dockerfile -t revanthparepalli/nodejs-app:$TAG .
+            docker build -f Dockerfile -t revanthacr.azurecr.io/nodejs-app:$TAG .
       - save_cache:
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
@@ -54,10 +54,3 @@ jobs:
               #az login --service-principal --username $AZURE_USERNAME	 --password $AZURE_PASSWORD --tenant $AZURE_TENANT
               az webapp config container set --name NodeJsWApp --resource-group appsvc_linux_centralus -c "revanthacr.azurecr.io/nodejs-app:$TAG"
             fi
-workflows:
-  version: 2
-  example-workflow:
-    jobs:
-        - verify-install
-        - login-to-azure
-        - build
