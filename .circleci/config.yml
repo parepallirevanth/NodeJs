@@ -1,15 +1,131 @@
-orbs:
-  azure-acr: circleci/azure-acr@0.2.0
-version: 2.1
+# Orb 'circleci/azure-acr@0.2.0' resolved to 'circleci/azure-acr@0.2.0'
+version: 2
+jobs:
+  azure-acr/build-and-push-image:
+    machine:
+      docker_layer_caching: false
+      image: ubuntu-1604:201903-01
+    steps:
+    - checkout
+    - run:
+        command: |
+          # Verify the CLI isn't already installed
+          # Use which instead of command -v for wider coverage of envs
+
+          if which az > /dev/null; then
+            echo "Azure CLI installed already."
+            exit 0
+          fi
+
+          # Set sudo to work whether logged in as root user or non-root user
+
+          if [[ $EUID == 0 ]]; then export SUDO=""; else export SUDO="sudo"; fi
+
+          $SUDO apt-get update && $SUDO apt-get -qqy install apt-transport-https
+
+          if [[ $(command -v lsb_release) == "" ]]; then
+            echo "Installing lsb_release"
+            $SUDO apt-get -qqy install lsb-release
+          fi
+
+          # Create an environment variable for the correct distribution
+          export AZ_REPO=$(lsb_release -cs)
+
+          # Modify your sources list
+
+          echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | \
+            $SUDO tee /etc/apt/sources.list.d/azure-cli.list
+
+          if [[ $(command -v curl) == "" ]]; then
+            echo "Installing curl"
+            $SUDO apt-get -qqy install curl
+          fi
+
+          # Get the Microsoft signing key
+
+          curl -L https://packages.microsoft.com/keys/microsoft.asc | $SUDO apt-key add -
+
+          # Update and install the Azure CLI
+
+          $SUDO apt-get update
+          $SUDO apt-get -qqy install \
+            ca-certificates \
+            azure-cli
+          echo "Azure CLI is now installed."
+        name: Install Azure CLI, if not available
+    - run:
+        command: |
+          if [ -n "${AZURE_USERNAME}" ]; then
+            echo "User credentials detected; logging in with user"
+            az login \
+               \
+              -u $AZURE_USERNAME \
+              -p $AZURE_PASSWORD
+          elif [ -n "${AZURE_SP}" ]; then
+            echo "Service Principal credentials detected; logging in with Service Principal"
+            az login \
+              --service-principal \
+              --tenant $AZURE_SP_TENANT \
+              -u $AZURE_SP \
+              -p $AZURE_SP_PASSWORD
+          else
+            echo "Login failed; neither user nor Service Principal credentials were provided"
+            exit 1
+          fi
+        name: Login to the Azure CLI with user or Service Principal
+    - run:
+        command: |
+          # Run ACR Docker Credential Helper installation script
+          # https://github.com/Azure/acr-docker-credential-helper#installation
+          curl -L https://aka.ms/acr/installaad/bash | /bin/bash
+        name: Configure Azure ACR helper
+    - run:
+        command: |
+          az acr login --name RevanthACR
+        name: Log into ACR
+    - run:
+        command: |
+          docker_tag_args=""
+
+          IFS="," read -ra DOCKER_TAGS <<< "$CIRCLE_TAG"
+          for tag in "${DOCKER_TAGS[@]}"; do
+            docker_tag_args="$docker_tag_args -t revanthacr.azurecr.io/nodejs-webapp:${tag}"
+          done
+
+          docker build  \
+            -f ./Dockerfile \
+            $docker_tag_args \
+            .
+        name: Docker build
+    - deploy:
+        command: |
+          IFS="," read -ra DOCKER_TAGS <<< "$CIRCLE_TAG"
+          for tag in "${DOCKER_TAGS[@]}"; do
+            docker push revanthacr.azurecr.io/nodejs-webapp:${tag}
+          done
+
+          if [ -n "" ]; then
+            mkdir -p "$(dirname )"
+            docker image inspect --format="{{index .RepoDigests 0}}" revanthacr.azurecr.io/nodejs-webapp:$CIRCLE_TAG > ""
+          fi
+        name: Push Docker image to ACR
 workflows:
   build-and-publish-docker-image:
     jobs:
-      - azure-acr/build-and-push-image:
-          dockerfile: Dockerfile
-          login-server-name: revanthacr.azurecr.io
-          registry-name: RevanthACR       
-          repo: nodejs-webapp
-          tag: $CIRCLE_TAG
-          filters:
-            branches:
-              only: master
+    - azure-acr/build-and-push-image
+  version: 2
+
+# Original config.yml file:
+# orbs:
+#   azure-acr: circleci/azure-acr@0.2.0
+# version: 2.1
+# workflows:
+#   build-and-publish-docker-image:
+#     jobs:
+#       - azure-acr/build-and-push-image:
+#           dockerfile: Dockerfile
+#           login-server-name: revanthacr.azurecr.io
+#           registry-name: RevanthACR       
+#           repo: nodejs-webapp
+#           tag: $CIRCLE_TAG
+#
