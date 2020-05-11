@@ -1,37 +1,15 @@
+orbs:
+  azure-acr: circleci/azure-acr@0.2.0
 version: 2.1
-jobs:
-  build:
-    working_directory: ~/public
-    docker:
-      - image: circleci/python:3.6
-    steps:
-      - checkout
-      - setup_remote_docker
-      - run:
-          name: Install Dependencies
-          command: |
-            sudo pip install azure-cli
-      - restore_cache:
-          key: dependency-cache-{{ checksum "package.json" }}
-      
-      - run:
-          name: Build Docker image
-          command: |
-            TAG=$CIRCLE_SHA1
-            docker build -f Dockerfile -t revanthacr.azurecr.io/nodejs-app:$TAG .
-      - save_cache:
-          key: dependency-cache-{{ checksum "package.json" }}
-          paths:
-            - ./node_modules
-
-      - run:
-          name: Push Docker image and Update Azure Web App with the image
-          command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              TAG=$CIRCLE_SHA1
-              az login --service-principal --username $AZURE_SP --password $AZURE_SP_PASSWORD --tenant $AZURE_SP_TENANT
-              az acr login --name RevanthACR
-              docker login revanthacr.azurecr.io -u RevanthACR -p 9aN7+FiFOp4DnelsDfWrPWrlUiM5cpqN
-              docker push revanthacr.azurecr.io/nodejs-app:$TAG
-              az webapp config container set --name NodeJsWApp --resource-group appsvc_linux_centralus -c "revanthacr.azurecr.io/nodejs-app:$TAG"
-            fi
+workflows:
+  build-and-publish-docker-image:
+    jobs:
+      - azure-acr/build-and-push-image:
+          dockerfile: Dockerfile
+          login-server-name: revanthacr.azurecr.io
+          registry-name: RevanthACR       
+          repo: nodejs-webapp
+          tag: $CIRCLE_TAG
+          filters:
+            branches:
+              only: master
